@@ -1,0 +1,5 @@
+*.o
+*~
+ObjWebServer
+htdocs
+modules

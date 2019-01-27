@@ -1,0 +1,11 @@
+<ObjWebServer>
+	<listen host="0.0.0.0" port="1234">
+		<tls cert="test.crt" key="test.key"/>
+	</listen>
+	<listen host="::" port="1234">
+		<tls cert="test.crt" key="test.key"/>
+	</listen>
+	<module prefix="/" path="modules/static">
+		<root>htdocs</root>
+	</module>
+</ObjWebServer>
