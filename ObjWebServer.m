@@ -109,9 +109,9 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 
 	for (OFPair OF_GENERIC(OFString *, id <Module>) *module in _modules)
 		if ([path hasPrefix: [module firstObject]])
-			[[module secondObject] server: server
-				    didReceiveRequest: request
-					  requestBody: requestBody
-					     response: response];
+			if ([[module secondObject] handleRequest: request
+						     requestBody: requestBody
+							response: response])
+				return;
 }
 @end

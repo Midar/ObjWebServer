@@ -20,8 +20,7 @@
 
 @protocol Module
 - (void)parseConfig: (OFXMLElement *)config;
--      (void)server: (OFHTTPServer *)server
-  didReceiveRequest: (OFHTTPRequest *)request
-	requestBody: (OFStream *)requestBody
-	   response: (OFHTTPResponse *)response;
+- (bool)handleRequest: (OFHTTPRequest *)request
+	  requestBody: (OFStream *)requestBody
+	     response: (OFHTTPResponse *)response;
 @end
