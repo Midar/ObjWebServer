@@ -92,6 +92,7 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 	[server setHost: host];
 	[server setPort: port];
 	[server setDelegate: self];
+	[server setNumberOfThreads: [OFSystemInfo numberOfCPUs] + 1];
 
 	of_log(@"Starting server on host %@ port %" PRIu16, host, port);
 
