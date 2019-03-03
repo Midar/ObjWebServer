@@ -2,4 +2,6 @@
 *~
 ObjWebServer
 htdocs
+localhost.crt
+localhost.key
 modules

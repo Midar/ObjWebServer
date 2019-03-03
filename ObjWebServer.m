@@ -32,8 +32,7 @@
 
 - (OFPlugin <Module> *)loadModuleAtPath: (OFString *)path
 			     withConfig: (OFXMLElement *)config;
-- (void)startWebserverOnHost: (OFString *)host
-			port: (uint16_t)port;
+- (void)startWebserverWithListenConfig: (ListenConfig *)listenConfig;
 @end
 
 OF_APPLICATION_DELEGATE(ObjWebServer)
@@ -62,14 +61,8 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 	[modules makeImmutable];
 	_modules = [modules copy];
 
-	for (OFPair OF_GENERIC(OFString *, OFNumber *) *listenHost in
-	    [_config listenHosts]) {
-		OFString *host = [listenHost firstObject];
-		OFNumber *port = [listenHost secondObject];
-
-		[self startWebserverOnHost: host
-				      port: [port uInt16Value]];
-	}
+	for (ListenConfig *listenConfig in [_config listenConfigs])
+		[self startWebserverWithListenConfig: listenConfig];
 }
 
 - (OFPlugin <Module> *)loadModuleAtPath: (OFString *)path
@@ -85,16 +78,24 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 	return module;
 }
 
-- (void)startWebserverOnHost: (OFString *)host
-			port: (uint16_t)port
+- (void)startWebserverWithListenConfig: (ListenConfig *)listenConfig
 {
 	OFHTTPServer *server = [OFHTTPServer server];
-	[server setHost: host];
-	[server setPort: port];
-	[server setDelegate: self];
-	[server setNumberOfThreads: [OFSystemInfo numberOfCPUs] + 1];
+	[server setHost: [listenConfig host]];
+	[server setPort: [listenConfig port]];
 
-	of_log(@"Starting server on host %@ port %" PRIu16, host, port);
+	if ([listenConfig TLSCertificateFile] != nil &&
+	    [listenConfig TLSKeyFile] != nil) {
+		[server setUsesTLS: true];
+		[server setCertificateFile: [listenConfig TLSCertificateFile]];
+		[server setPrivateKeyFile: [listenConfig TLSKeyFile]];
+	}
+
+	[server setNumberOfThreads: [OFSystemInfo numberOfCPUs] + 1];
+	[server setDelegate: self];
+
+	of_log(@"Starting server on host %@ port %" PRIu16,
+	    [listenConfig host], [listenConfig port]);
 
 	[server start];
 }
@@ -114,5 +115,13 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 						     requestBody: requestBody
 							response: response])
 				return;
+}
+
+-			  (bool)server: (OFHTTPServer *)server
+  didReceiveExceptionOnListeningSocket: (id)exception
+{
+	of_log(@"Exception on listening socket: %@", exception);
+
+	return true;
 }
 @end

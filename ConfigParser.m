@@ -25,8 +25,23 @@
 - (void)_invalidConfig: (OFString *)message;
 @end
 
+@implementation ListenConfig
+@synthesize host = _host, port = _port;
+@synthesize TLSCertificateFile = _TLSCertificateFile;
+@synthesize TLSKeyFile = _TLSKeyFile;
+
+- (void)dealloc
+{
+	[_host release];
+	[_TLSCertificateFile release];
+	[_TLSKeyFile release];
+
+	[super dealloc];
+}
+@end
+
 @implementation ConfigParser
-@synthesize listenHosts = _listenHosts, modules = _modules;
+@synthesize listenConfigs = _listenConfigs, modules = _modules;
 
 - (instancetype)init
 {
@@ -55,7 +70,7 @@
 
 - (void)dealloc
 {
-	[_listenHosts release];
+	[_listenConfigs release];
 
 	[super dealloc];
 }
@@ -76,15 +91,17 @@
 
 - (void)_parseListens: (OFArray OF_GENERIC(OFXMLElement *) *)elements
 {
-	OFMutableArray OF_GENERIC(OFPair OF_GENERIC(OFString *, OFNumber *) *)
-	    *listenHosts = [OFMutableArray array];
+	OFMutableArray OF_GENERIC(ListenConfig *) *listenConfigs =
+	    [OFMutableArray array];
 
 	for (OFXMLElement *element in elements) {
+		ListenConfig *listenConfig =
+		    [[[ListenConfig alloc] init] autorelease];
 		OFString *host = [[element
 		    attributeForName: @"host"] stringValue];
 		OFString *portString = [[element
 		    attributeForName: @"port"] stringValue];
-		OFNumber *port;
+		OFXMLElement *TLS = [element elementForName: @"tls"];
 
 		if (host == nil)
 			[self _invalidConfig:
@@ -93,22 +110,40 @@
 			[self _invalidConfig:
 			    @"<listen/> is missing port attribute"];
 
+		[listenConfig setHost: host];
+
 		@try {
-			intmax_t tmp = [portString decimalValue];
-			if (tmp < 0 || tmp > 65535)
+			intmax_t port = [portString decimalValue];
+			if (port < 0 || port > 65535)
 				@throw [OFInvalidFormatException exception];
 
-			port = [OFNumber numberWithUInt16: (uint16_t)tmp];
+			[listenConfig setPort: port];
 		} @catch (OFInvalidFormatException *e) {
 			[self _invalidConfig: @"<listen/> has invalid port"];
 		}
 
-		[listenHosts addObject: [OFPair pairWithFirstObject: host
-						       secondObject: port]];
+		if (TLS != nil) {
+			OFString *certificateFile =
+			    [[TLS attributeForName: @"cert"] stringValue];
+			OFString *keyFile =
+			    [[TLS attributeForName: @"key"] stringValue];
+
+			if (certificateFile == nil)
+				[self _invalidConfig:
+				    @"<tls/> has no cert attribute"];
+			if (keyFile == nil)
+				[self _invalidConfig:
+				    @"<tls/> has no key attribute"];
+
+			[listenConfig setTLSCertificateFile: certificateFile];
+			[listenConfig setTLSKeyFile: keyFile];
+		}
+
+		[listenConfigs addObject: listenConfig];
 	}
 
-	[listenHosts makeImmutable];
-	_listenHosts = [listenHosts copy];
+	[listenConfigs makeImmutable];
+	_listenConfigs = [listenConfigs copy];
 }
 
 - (void)_parseModules: (OFArray OF_GENERIC(OFXMLElement *) *)elements

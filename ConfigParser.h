@@ -18,15 +18,26 @@
 
 #import <ObjFW/ObjFW.h>
 
+@interface ListenConfig: OFObject
+{
+	OFString *_host;
+	uint16_t _port;
+	OFString *_TLSCertificateFile, *_TLSKeyFile;
+}
+
+@property (copy, nonatomic) OFString *host;
+@property (nonatomic) uint16_t port;
+@property (copy, nonatomic) OFString *TLSCertificateFile, *TLSKeyFile;
+@end
+
 @interface ConfigParser: OFObject
 {
-	OFArray OF_GENERIC(OFPair OF_GENERIC(OFString *, OFNumber *) *)
-	    *_listenHosts;
+	OFArray OF_GENERIC(ListenConfig *) *_listenConfigs;
 	OFArray OF_GENERIC(OFXMLElement *) *_modules;
 }
 
-@property (readonly, nonatomic) OFArray OF_GENERIC(
-    OFPair OF_GENERIC(OFString *, OFNumber *) *) *listenHosts;
+@property (readonly, nonatomic) OFArray OF_GENERIC(ListenConfig *)
+    *listenConfigs;
 @property (readonly, nonatomic) OFArray OF_GENERIC(OFXMLElement *) *modules;
 
 - (instancetype)init OF_UNAVAILABLE;
