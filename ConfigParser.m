@@ -79,8 +79,7 @@
 {
 	void *pool = objc_autoreleasePoolPush();
 
-	if ([config namespace] != nil ||
-	    ![[config name] isEqual: @"ObjWebServer"])
+	if (config.namespace != nil || ![config.name isEqual: @"ObjWebServer"])
 		[self _invalidConfig: @"Root element is not ObjWebServer"];
 
 	[self _parseListens: [config elementsForName: @"listen"]];
@@ -97,10 +96,10 @@
 	for (OFXMLElement *element in elements) {
 		ListenConfig *listenConfig =
 		    [[[ListenConfig alloc] init] autorelease];
-		OFString *host = [[element
-		    attributeForName: @"host"] stringValue];
-		OFString *portString = [[element
-		    attributeForName: @"port"] stringValue];
+		OFString *host =
+		    [element attributeForName: @"host"].stringValue;
+		OFString *portString =
+		    [element attributeForName: @"port"].stringValue;
 		OFXMLElement *TLS = [element elementForName: @"tls"];
 
 		if (host == nil)
@@ -110,23 +109,23 @@
 			[self _invalidConfig:
 			    @"<listen/> is missing port attribute"];
 
-		[listenConfig setHost: host];
+		listenConfig.host = host;
 
 		@try {
-			intmax_t port = [portString decimalValue];
+			intmax_t port = portString.decimalValue;
 			if (port < 0 || port > 65535)
 				@throw [OFInvalidFormatException exception];
 
-			[listenConfig setPort: port];
+			listenConfig.port = port;
 		} @catch (OFInvalidFormatException *e) {
 			[self _invalidConfig: @"<listen/> has invalid port"];
 		}
 
 		if (TLS != nil) {
 			OFString *certificateFile =
-			    [[TLS attributeForName: @"cert"] stringValue];
+			    [TLS attributeForName: @"cert"].stringValue;
 			OFString *keyFile =
-			    [[TLS attributeForName: @"key"] stringValue];
+			    [TLS attributeForName: @"key"].stringValue;
 
 			if (certificateFile == nil)
 				[self _invalidConfig:
@@ -135,8 +134,8 @@
 				[self _invalidConfig:
 				    @"<tls/> has no key attribute"];
 
-			[listenConfig setTLSCertificateFile: certificateFile];
-			[listenConfig setTLSKeyFile: keyFile];
+			listenConfig.TLSCertificateFile = certificateFile;
+			listenConfig.TLSKeyFile = keyFile;
 		}
 
 		[listenConfigs addObject: listenConfig];
@@ -152,10 +151,10 @@
 	    [OFMutableArray array];
 
 	for (OFXMLElement *element in elements) {
-		OFString *path = [[element
-		    attributeForName: @"path"] stringValue];
-		OFString *prefix = [[element
-		    attributeForName: @"prefix"] stringValue];
+		OFString *path =
+		    [element attributeForName: @"path"].stringValue;
+		OFString *prefix =
+		    [element attributeForName: @"prefix"].stringValue;
 
 		if (path == nil || prefix == nil)
 			[self _invalidConfig:

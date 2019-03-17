@@ -49,9 +49,9 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 	modules = [OFMutableArray array];
 	for (OFXMLElement *config in [_config modules]) {
 		OFString *path =
-		    [[config attributeForName: @"path"] stringValue];
+		    [config attributeForName: @"path"].stringValue;
 		OFString *prefix =
-		    [[config attributeForName: @"prefix"] stringValue];
+		    [config attributeForName: @"prefix"].stringValue;
 		OFPlugin <Module> *module = [self loadModuleAtPath: path
 							withConfig: config];
 
@@ -61,7 +61,7 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 	[modules makeImmutable];
 	_modules = [modules copy];
 
-	for (ListenConfig *listenConfig in [_config listenConfigs])
+	for (ListenConfig *listenConfig in _config.listenConfigs)
 		[self startWebserverWithListenConfig: listenConfig];
 }
 
@@ -81,21 +81,21 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 - (void)startWebserverWithListenConfig: (ListenConfig *)listenConfig
 {
 	OFHTTPServer *server = [OFHTTPServer server];
-	[server setHost: [listenConfig host]];
-	[server setPort: [listenConfig port]];
+	server.host = listenConfig.host;
+	server.port = listenConfig.port;
 
-	if ([listenConfig TLSCertificateFile] != nil &&
-	    [listenConfig TLSKeyFile] != nil) {
-		[server setUsesTLS: true];
-		[server setCertificateFile: [listenConfig TLSCertificateFile]];
-		[server setPrivateKeyFile: [listenConfig TLSKeyFile]];
+	if (listenConfig.TLSCertificateFile != nil &&
+	    listenConfig.TLSKeyFile != nil) {
+		server.usesTLS = true;
+		server.certificateFile = listenConfig.TLSCertificateFile;
+		server.privateKeyFile = listenConfig.TLSKeyFile;
 	}
 
-	[server setNumberOfThreads: [OFSystemInfo numberOfCPUs] + 1];
-	[server setDelegate: self];
+	server.numberOfThreads = [OFSystemInfo numberOfCPUs] + 1;
+	server.delegate = self;
 
 	of_log(@"Starting server on host %@ port %" PRIu16,
-	    [listenConfig host], [listenConfig port]);
+	    listenConfig.host, listenConfig.port);
 
 	[server start];
 }
@@ -105,15 +105,15 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 	requestBody: (OFStream *)requestBody
 	   response: (OFHTTPResponse *)response
 {
-	OFString *path = [[request URL] path];
+	OFString *path = request.URL.path;
 
 	of_log(@"Request: %@", request);
 
 	for (OFPair OF_GENERIC(OFString *, id <Module>) *module in _modules)
-		if ([path hasPrefix: [module firstObject]])
-			if ([[module secondObject] handleRequest: request
-						     requestBody: requestBody
-							response: response])
+		if ([path hasPrefix: module.firstObject])
+			if ([module.secondObject handleRequest: request
+						   requestBody: requestBody
+						      response: response])
 				return;
 }
 

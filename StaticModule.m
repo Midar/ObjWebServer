@@ -71,12 +71,12 @@ readData(OFStream *stream)
 	[super dealloc];
 }
 
-- (OFData *)stream: (OF_KINDOF(OFStream *))stream
+- (OFData *)stream: (OFStream *)stream
       didWriteData: (OFData *)data
       bytesWritten: (size_t)bytesWritten
 	 exception: (id)exception
 {
-	if (exception != nil || [_file isAtEndOfStream])
+	if (exception != nil || _file.atEndOfStream)
 		return nil;
 
 	return readData(_file);
@@ -95,7 +95,7 @@ readData(OFStream *stream)
 {
 	OFMutableDictionary OF_GENERIC(OFString *, OFString *) *MIMETypes;
 
-	_root = [[[config elementForName: @"root"] stringValue] copy];
+	_root = [[config elementForName: @"root"].stringValue copy];
 	if (_root == nil) {
 		[of_stderr writeString:
 		    @"Error parsing config: No <root/> element!"];
@@ -105,9 +105,9 @@ readData(OFStream *stream)
 	MIMETypes = [OFMutableDictionary dictionary];
 	for (OFXMLElement *MIMEType in [config elementsForName: @"mime-type"]) {
 		OFString *extension =
-		    [[MIMEType attributeForName: @"extension"] stringValue];
+		    [MIMEType attributeForName: @"extension"].stringValue;
 		OFString *type =
-		    [[MIMEType attributeForName: @"type"] stringValue];
+		    [MIMEType attributeForName: @"type"].stringValue;
 
 		if (extension == nil) {
 			[of_stderr writeString:
@@ -133,16 +133,16 @@ readData(OFStream *stream)
 	  requestBody: (OFStream *)requestBody
 	     response: (OFHTTPResponse *)response
 {
-	OFURL *URL = [[request URL] URLByStandardizingPath];
-	OFString *path = [URL path];
+	OFURL *URL = request.URL.URLByStandardizingPath;
+	OFString *path = URL.path;
 	OFMutableDictionary *headers = [OFMutableDictionary dictionary];
 	OFFileManager *fileManager;
 	bool firstComponent = true;
 	OFString *MIMEType;
 	StaticModule_FileSender *fileSender;
 
-	for (OFString *component in [URL pathComponents]) {
-		if (firstComponent && [component length] != 0)
+	for (OFString *component in URL.pathComponents) {
+		if (firstComponent && component.length != 0)
 			return false;
 
 		if ([component isEqual: @"."] || [component isEqual: @".."])
@@ -162,11 +162,11 @@ readData(OFStream *stream)
 		path = [path stringByAppendingPathComponent: @"index.html"];
 
 	if (![fileManager fileExistsAtPath: path]) {
-		[response setStatusCode: 404];
+		response.statusCode = 404;
 		return false;
 	}
 
-	MIMEType = [_MIMETypes objectForKey: [path pathExtension]];
+	MIMEType = [_MIMETypes objectForKey: path.pathExtension];
 	if (MIMEType == nil)
 		MIMEType = [_MIMETypes objectForKey: @""];
 
@@ -179,9 +179,9 @@ readData(OFStream *stream)
 						    mode: @"r"];
 	fileSender->_response = [response retain];
 
-	[response setStatusCode: 200];
-	[response setHeaders: headers];
-	[response setDelegate: fileSender];
+	response.statusCode = 200;
+	response.headers = headers;
+	response.delegate = fileSender;
 	[response asyncWriteData: readData(fileSender->_file)];
 
 	return true;
