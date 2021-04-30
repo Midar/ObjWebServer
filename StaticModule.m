@@ -97,7 +97,7 @@ readData(OFStream *stream)
 
 	_root = [[config elementForName: @"root"].stringValue copy];
 	if (_root == nil) {
-		[of_stderr writeString:
+		[OFStdErr writeString:
 		    @"Error parsing config: No <root/> element!"];
 		[OFApplication terminateWithStatus: 1];
 	}
@@ -110,13 +110,13 @@ readData(OFStream *stream)
 		    [MIMEType attributeForName: @"type"].stringValue;
 
 		if (extension == nil) {
-			[of_stderr writeString:
+			[OFStdErr writeString:
 			    @"Error parsing config: "
 			    @"<mime-type/> has no extension attribute!"];
 			[OFApplication terminateWithStatus: 1];
 		}
 		if (type == nil) {
-			[of_stderr writeString:
+			[OFStdErr writeString:
 			    @"Error parsing config: "
 			    @"<mime-type/> has no type attribute!"];
 			[OFApplication terminateWithStatus: 1];
@@ -189,7 +189,7 @@ readData(OFStream *stream)
 @end
 
 StaticModule *
-init_plugin(void)
+OFPluginInit(void)
 {
 	return [[[StaticModule alloc] init] autorelease];
 }

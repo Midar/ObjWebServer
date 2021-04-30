@@ -53,13 +53,19 @@
 	self = [super init];
 
 	@try {
+		void *pool = objc_autoreleasePoolPush();
+		OFFile *configFile = [OFFile fileWithPath: configPath
+						     mode: @"r"];
+
 		OFXMLElement *config = [[OFXMLElement alloc]
-		    initWithFile: configPath];
+		    initWithStream: configFile];
 		@try {
 			[self _parseConfig: config];
 		} @finally {
 			[config release];
 		}
+
+		objc_autoreleasePoolPop(pool);
 	} @catch (id e) {
 		[self release];
 		@throw e;
@@ -112,7 +118,7 @@
 		listenConfig.host = host;
 
 		@try {
-			intmax_t port = portString.decimalValue;
+			long long port = portString.longLongValue;
 			if (port < 0 || port > 65535)
 				@throw [OFInvalidFormatException exception];
 
@@ -169,7 +175,7 @@
 
 - (void)_invalidConfig: (OFString *)message
 {
-	[of_stderr writeFormat: @"Error parsing config: %@", message];
+	[OFStdErr writeFormat: @"Error parsing config: %@", message];
 	[OFApplication terminateWithStatus: 1];
 }
 @end

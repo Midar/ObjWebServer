@@ -70,9 +70,9 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 {
 	OFPlugin <Module> *module;
 
-	of_log(@"Loading module at %@", path);
+	OFLog(@"Loading module at %@", path);
 
-	module = [OFPlugin pluginFromFile: path];
+	module = [OFPlugin pluginWithPath: path];
 	[module parseConfig: config];
 
 	return module;
@@ -94,7 +94,7 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 	server.numberOfThreads = [OFSystemInfo numberOfCPUs] + 1;
 	server.delegate = self;
 
-	of_log(@"Starting server on host %@ port %" PRIu16,
+	OFLog(@"Starting server on host %@ port %" PRIu16,
 	    listenConfig.host, listenConfig.port);
 
 	[server start];
@@ -107,7 +107,7 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 {
 	OFString *path = request.URL.path;
 
-	of_log(@"Request: %@", request);
+	OFLog(@"Request: %@", request);
 
 	for (OFPair OF_GENERIC(OFString *, id <Module>) *module in _modules)
 		if ([path hasPrefix: module.firstObject])
@@ -120,7 +120,7 @@ OF_APPLICATION_DELEGATE(ObjWebServer)
 -			  (bool)server: (OFHTTPServer *)server
   didReceiveExceptionOnListeningSocket: (id)exception
 {
-	of_log(@"Exception on listening socket: %@", exception);
+	OFLog(@"Exception on listening socket: %@", exception);
 
 	return true;
 }
